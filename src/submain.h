@@ -9,11 +9,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/msg.h>
-#include "submain.h"
 
 #define QUEUE_FILE "src/main.c"
 #define QUEUE_PROJ_ID 256
