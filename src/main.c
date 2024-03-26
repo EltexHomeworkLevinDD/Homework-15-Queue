@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/msg.h>
+#include <sys/wait.h>
 #include "submain.h"
 
 int main(){
@@ -35,6 +36,8 @@ int main(){
         
         // Блокирующая отправка сообщения
         send_msg(id, 1, "Parent send: ", "Hello, world!");
+        int status;
+        wait(&status);
         // Блокирующее чтение сообщения
         get_msg(id, 0, "Parent receive ");
         free(fullpath);
