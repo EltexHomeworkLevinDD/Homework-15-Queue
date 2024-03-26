@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <mqueue.h>
 #include "submain.h"
 
@@ -44,6 +45,8 @@ int main(){
         
         // Блокирующая отправка сообщения
         send_msg(des, "Parent send: ", "Hello, world!");
+        int status;
+        wait(&status);
         // Блокирующее чтение сообщения
         get_msg(des, "Parent receive ");
         mq_close(des);
