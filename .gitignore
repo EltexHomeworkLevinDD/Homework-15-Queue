@@ -2,6 +2,6 @@
 !src/
 !src/*
 !.gitignore
-!Screenshot*
 !Makefile
 !README.md
+!Screenshot*
