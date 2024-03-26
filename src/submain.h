@@ -1,6 +1,10 @@
 #ifndef SUBMAIN_H
 #define SUBMAIN_H
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif//_GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>

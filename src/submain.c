@@ -1,37 +1,28 @@
 #include "submain.h"
 
-void get_msg(int qid, int msgtype, const char* prefix)
+void get_msg(mqd_t des, const char* prefix)
 {
-    struct mymsgbuf msg;
+    char* msg = malloc(sizeof(char)*MTEXT_MAX_SIZE);
+    if (msg == NULL) EXITMSG("Malloc, get_msg()");
 
-    if (msgrcv(qid, &msg, MTEXT_MAX_SIZE, msgtype, MSG_NOERROR) == -1) {
-        if (errno != ENOMSG) EXITMSG("msgsnd error");
-        printf("No message available for msgrcv()\n");
+    unsigned int prio;
+    if (mq_receive(des, msg, MTEXT_MAX_SIZE, &prio) == -1){
+        free(msg);
+        EXITMSG("mq_receive");
     }
-
-    if (prefix == NULL){
-        printf("message received: '%s'\n", msg.mtext);
-    } 
     else {
-        printf("%s'%s'\n", prefix, msg.mtext);
+        printf("%s'%s'\n", prefix, msg);
+        free(msg);
     }
 }
 
-void send_msg(int qid, int msgtype, const char* prefix, const char* text)
+void send_msg(mqd_t des, const char* prefix, const char* text)
 {
-    struct mymsgbuf  msg;
-
-    msg.mtype = msgtype;
-    strncpy(msg.mtext, text, MTEXT_MAX_SIZE);
-    msg.mtext[MTEXT_MAX_SIZE-1] = '\0';
-
-    if (msgsnd(qid, &msg, MTEXT_MAX_SIZE, 0) == -1) EXITMSG("msgsnd error");
-
-    if (prefix == NULL){
-        printf("sent: '%s'\n", msg.mtext);
-    } 
-    else {
-        printf("%s'%s'\n", prefix, msg.mtext);
+    if (mq_send(des, text, MTEXT_MAX_SIZE, 1) == -1){
+        EXITMSG("mq_send");
+    }
+    else{
+        printf("%s'%s'\n", prefix, text);
     }
 }
 
