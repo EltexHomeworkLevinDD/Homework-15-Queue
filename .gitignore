@@ -1,0 +1,10 @@
+*
+!client/
+!client/*
+!client/*.c
+!client/*.h
+!server/
+!server/*queue
+!Makefile
+!.gitignore
+!*.h
