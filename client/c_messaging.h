@@ -31,18 +31,22 @@ extern key_t control_queue_key;
 extern key_t text_queue_key;
 // msqid очередей
 extern int control_queue_msqid;
-extern int text__queue_msqid;
+extern int text_queue_msqid;
 // Указатели на динамические массивы полных путей очередей
 extern char* full_control_queue_path;
 extern char* full_text_queue_path;
 // Приоритеты (направления) передачи сообщений
 extern long PTS; // priority to server - На сервер
 extern long PFS; // priority from server - От сервера клиенту
+// Флаг установления соединения (0 если не установлено)
+extern int flg_connection_established;
 
+// ============ Control plane
 /*
-Передать запрос установления соединения
+Установить соединение и получить историю сообщений
 - name - Имя клиента
 - name_size - Размер имени клиента
+- history - Пустой указатель на историю сообщений
 
 После выполнения инициализируются глобальные
 - control_queue_key
@@ -54,13 +58,25 @@ extern long PFS; // priority from server - От сервера клиенту
 - PTS
 - PFS
 
-Возвращает указатель на динамический массив char, размером
-MAX_HISTORY_SIZE, содержащий историю сообщений
+Возвращает размер allocated массива history, 
+освобождайте его самостоятельно
 */
-char* startup(char* name, int name_size);
-void send_break_connect();
-char* get_canonic_path(const char* relative_path);
+size_t establish_connection(char* name, int name_size, char** history);
+/*
+Получить историю сообщений
+- history - Пустой указатель на историю сообщений
+Возвращает размер allocated массива history, 
+освобождайте его самостоятельно
+*/
+size_t get_history(char** history);
 
-static void send_setup_connect_request(char* name, int name_size);
+// ============ Text plane
+
+
+
+// ============ Other
+
+// Получить канонический полный путь из относительного пути
+char* get_canonic_path(const char* relative_path);
 
 #endif//C_MESSAGING_H
