@@ -41,7 +41,7 @@ extern long PFS; // priority from server - От сервера клиенту
 // Флаг установления соединения (0 если не установлено)
 extern int flg_connection_established;
 
-// ============ Control plane
+// ============ Control plane ============
 /*
 Установить соединение и получить историю сообщений
 - name - Имя клиента
@@ -60,21 +60,52 @@ extern int flg_connection_established;
 
 Возвращает размер allocated массива history, 
 освобождайте его самостоятельно
+
+Требуется обработать возвращаемое значение, в случае неудачи
+послать send_break_connect() и освободить 
+- full_text_queue_path
+- full_control_queue_path
 */
 size_t establish_connection(char* name, int name_size, char** history);
 /*
 Получить историю сообщений
 - history - Пустой указатель на историю сообщений
-Возвращает размер allocated массива history, 
+
+Возвращает размер allocated массива history в байтах,
 освобождайте его самостоятельно
 */
 size_t get_history(char** history);
+/*
+Послать сообщение разрыва соединения
+Освобождает 
+- full_text_queue_path
+- full_control_queue_path
 
-// ============ Text plane
+И устанавливает flg_connection_established = 0
+*/
+void send_break_connect();
 
+// ============ Text plane ============
+/*
+Отправить сообщение на сервер
+- text - сообщение
+- text_len - длина сообщения
+*/
+void send_text_message(char* text, int text_len);
+/*
+Получить сообщение
+- text - пустой указатель на сообщение
 
+Возвращает размер allocated массива text в байтах,
+освобождайте его самостоятельно
 
-// ============ Other
+Требуется обработать возвращаемое значение, в случае неудачи
+послать send_break_connect() и освободить 
+- full_text_queue_path
+- full_control_queue_path
+*/
+size_t get_text_message(char** text);
+// ============ Other ============
 
 // Получить канонический полный путь из относительного пути
 char* get_canonic_path(const char* relative_path);

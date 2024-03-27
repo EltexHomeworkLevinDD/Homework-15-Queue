@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "c_messaging.h"
 
-
+void* control_thread();
+void* text_thread();
 
 #endif
