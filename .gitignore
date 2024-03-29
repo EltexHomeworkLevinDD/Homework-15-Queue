@@ -1,8 +1,9 @@
 *
 !client/
-!client/*
-!client/*.c
-!client/*.h
+!client/Makefile
+!client/src
+!client/src/*.c
+!client/src/*.h
 !server/
 !server/*queue
 !Makefile
