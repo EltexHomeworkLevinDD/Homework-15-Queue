@@ -3,13 +3,11 @@
 // Static functions prototypes
 
 static char* get_canonic_path(const char*);
-static int check_msgrcv();
-static int check_msgsnd();
 
 // Public functions prototypes
 
-int send_control_message(struct ControlMessage* msg);
-int get_control_message(struct ControlMessage* msg, long priority);
+int send_control_message(struct ControlMessage* msg, int msgflg);
+int get_control_message(struct ControlMessage* msg, long priority, int msgflg);
 
 //////////////////////////////////////////////////////////////////////
 ////////////////////////// STATIC FUNCTIONS //////////////////////////
@@ -27,123 +25,6 @@ static char* get_canonic_path(const char* relative_path){
     }
     return canonical_dest_path;
 }
-
-/*Проверить функцию msgrcv
-Возвращает 
-- ECMSG_SUCCESS
-- ECMSG_NOMSG
-- ECMSG_SIGNIT
-- ECMSG_CRITICAL*/
-static int check_msgrcv(){
-    switch (errno)
-    {
-        case ENOMSG:
-            // Сообщения нет
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Сообщения нет in get_control_message()");
-            #endif
-            return ECMSG_NOMSG;
-        case EIDRM:
-            // Идентификатор удалён
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Идентификатор удалён in get_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-        case EINTR:
-            // Системный вызов был прерван сигналом, пробуем еще раз
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Вызов был прерван сигналом in get_control_message()");
-            #endif
-            return ECMSG_SIGNIT;
-        case EACCES:
-            // Нет разрешения на доступ к очереди сообщений
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Нет разрешения на доступ к очереди in get_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-        case EFAULT:
-            // Указан неправильный адрес сообщения
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Неправильный адрес in get_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-        default:
-            // Другие неожиданные ошибки
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgrcv() Неожиданная ошибка in get_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-    }
-    return ECMSG_SUCCESS;
-}
-
-/*Проверить функию msgsnd
-Возвращает 
-- ECMSG_SUCCESS
-- ECMSG_SIGNIT
-- ECMSG_CRITICAL*/
-static int check_msgsnd(){
-    switch (errno) {
-        case EACCES:
-            // Нет разрешения на доступ к очереди сообщений
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Нет разрешения на доступ к очереди in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        case EAGAIN:
-            // Сообщение не может быть отправлено из-за ограничения msg_qbytes для очереди
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Сообщение не может быть отправлено in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        case EFAULT:
-            // Указанный адрес недоступен
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Неправильный адрес in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        case EIDRM:
-            // Идентификатор очереди удален
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Идентификатор очереди удален in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        case EINTR:
-            // Системный вызов прерван сигналом, пробуем еще раз
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Вызов прерван сигналом in send_control_message()");
-            #endif
-            return ECMSG_SIGNIT;
-            break;
-        case EINVAL:
-            // Ошибка в аргументах функции
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Ошибка в аргументах функции in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        case ENOMEM:
-            // Недостаточно памяти для создания копии сообщения
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Недостаточно памяти in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-        default:
-            // Другие неожиданные ошибки
-            #ifdef ETRACE_CLIENT_MESSAGING
-                perror("msgsnd() Неожиданная ошибка in send_control_message()");
-            #endif
-            return ECMSG_CRITICAL;
-            break;
-    }
-    return ECMSG_SUCCESS;
-}
-
 
 /*Подключиться к очереди
 - key - Ключ очереди
@@ -274,7 +155,7 @@ static int connect_all_queue(){
 - ECMSG_SUCCESS
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int send_setup_connect_request(char* name, int name_size){
+static int send_setup_connect_request(char* name, int name_size, int msgflg){
     // Формирую сообщение setup_connect_request
     struct ControlMessage msg;
     msg.mtype = 1; // prio = 1 - отправить на сервер (используется до установления соединения)
@@ -282,7 +163,7 @@ static int send_setup_connect_request(char* name, int name_size){
     strncpy(msg.content, name, name_size);
     msg.content[name_size-1] = '\0';
     
-    int res = send_control_message(&msg);
+    int res = send_control_message(&msg, msgflg);
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_control_message() for msg in send_setup_connect_request()");
@@ -304,13 +185,13 @@ static int send_setup_connect_request(char* name, int name_size){
 - ECMSG_NOMSG
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int get_setup_connect_response(char* name){
+static int get_setup_connect_response(char* name, int msgflg){
     // Формирую сообщение для получения данных от сервера setup_connect_response
     struct ControlMessage msg;
 
     // Жду сообщение со своим именем и приоритетом ("Name|Prio")
     // prio = 2 - получить от сервера (используется перед установлением соединения)
-    int res = get_control_message(&msg, 2);
+    int res = get_control_message(&msg, 2, msgflg);
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("get_control_message() for msg in get_setup_connect_response()");
@@ -369,7 +250,7 @@ static int get_setup_connect_response(char* name){
 - ECMSG_SUCCESS
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int send_get_history_request(){
+static int send_get_history_request(int msgflg){
     // Формирую сообщение для запроса получения истории сообщений
     struct ControlMessage msg;
     msg.mtype = PTS;
@@ -377,7 +258,7 @@ static int send_get_history_request(){
     msg.content[0] = '\0';
 
     // Отправляю сообщение на сервер
-    int res = send_control_message(&msg);
+    int res = send_control_message(&msg, msgflg);
     if (res != ECMSG_SUCCESS){
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_control_message() for msg in send_get_history_request()");
@@ -397,14 +278,14 @@ static int send_get_history_request(){
 - ECMSG_NOMSG
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int get_history_response(char** history){
+static int get_history_response(char** history, int msgflg){
     // Формирую сообщение для получения истории сообщений
     struct ControlHistory history_msg;
 
     // Жду ответное сообщение CM_GET_HISTORY_RESPONSE
     // prio = 2 - получить от сервера (используется перед установлением соединения)
     *history =  NULL;
-    msgrcv(control_queue_msqid, &history_msg, sizeof(struct ControlHistory), PFS, MSG_NOERROR);
+    msgrcv(control_queue_msqid, &history_msg, sizeof(struct ControlHistory), PFS, MSG_NOERROR | msgflg);
     int res = check_msgrcv();
     if (res != ECMSG_SUCCESS) {
         *history =  NULL;
@@ -440,7 +321,7 @@ static int get_history_response(char** history){
 - ECMSG_SUCCESS
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int send_get_users_list_request(){
+static int send_get_users_list_request(int msgflg){
     // Формирую сообщение для запроса получения истории сообщений
     struct ControlMessage msg;
     msg.mtype = PTS;
@@ -448,7 +329,7 @@ static int send_get_users_list_request(){
     msg.content[0] = '\0';
 
     // Отправляю сообщение на сервер
-    int res = send_control_message(&msg);
+    int res = send_control_message(&msg, msgflg);
     if (res != ECMSG_SUCCESS){
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_control_message() for msg in send_get_users_list_request()");
@@ -469,13 +350,13 @@ static int send_get_users_list_request(){
 - ECMSG_NOMSG
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL*/
-static int get_users_list_response(char*** list){
+static int get_users_list_response(char*** list, int msgflg){
     // Формирую сообщение для получения списка пользователей
     struct ControlUsersList recived;
 
     // Жду ответное сообщение CM_GET_HISTORY_RESPONSE
     // prio = 2 - получить от сервера (используется перед установлением соединения)
-    msgrcv(control_queue_msqid, &recived, sizeof(struct ControlHistory), PFS, MSG_NOERROR);
+    msgrcv(control_queue_msqid, &recived, sizeof(struct ControlHistory), PFS, MSG_NOERROR | msgflg);
     int res = check_msgrcv();
     if (res != ECMSG_SUCCESS) {
         *list =  NULL;
@@ -555,11 +436,11 @@ static int get_users_list_response(char*** list){
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL
 
-Требуется обработать возвращаемое значение, в случае неудачи
+Требуется обработать возвращаемое значение, в случае критической ошибки
 послать send_break_connect()*/
-int send_control_message(struct ControlMessage* msg){
+int send_control_message(struct ControlMessage* msg, int msgflg){
     // Отправляю сообщение на сервер
-    msgsnd(control_queue_msqid, msg, sizeof(struct ControlMessage), 0);
+    msgsnd(control_queue_msqid, msg, sizeof(struct ControlMessage), msgflg);
     int res = check_msgsnd();
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
@@ -579,11 +460,11 @@ int send_control_message(struct ControlMessage* msg){
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL
 
-Требуется обработать возвращаемое значение, в случае неудачи
+Требуется обработать возвращаемое значение, в случае критической ошибки
 послать send_break_connect()*/
-int get_control_message(struct ControlMessage* msg, long priority){
+int get_control_message(struct ControlMessage* msg, long priority, int msgflg){
     // Жду сообщение
-    msgrcv(control_queue_msqid, msg, sizeof(struct ControlMessage), priority, 0);
+    msgrcv(control_queue_msqid, msg, sizeof(struct ControlMessage), priority, msgflg);
     int res = check_msgrcv();
     if (res != ECMSG_SUCCESS){
         #ifdef ETRACE_CLIENT_MESSAGING
@@ -602,9 +483,9 @@ int get_control_message(struct ControlMessage* msg, long priority){
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL
 
-Требуется обработать возвращаемое значение, в случае неудачи
+Требуется обработать возвращаемое значение, в случае критической ошибки
 послать send_break_connect()*/
-int send_break_connect(){
+int send_break_connect(int msgflg){
     // Формирую сообщение для отправки
     struct ControlMessage msg;
     msg.mtype = PTS;
@@ -612,7 +493,7 @@ int send_break_connect(){
     msg.content[0] = '\0';
 
     // Отправляю сообщение CM_BREAK_CONNECT на сервер
-    int res = send_control_message(&msg);
+    int res = send_control_message(&msg, msgflg);
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_control_message() for msg in send_break_connect()");
@@ -634,11 +515,11 @@ int send_break_connect(){
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL
 
-Требуется обработать возвращаемое значение, в случае неудачи
+Требуется обработать возвращаемое значение, в случае критической ошибки
 послать send_break_connect()*/
-int get_history(char** history){
+int get_history(char** history, int msgsndflg, int msgrcvflg) {
     // Отправить запрос истории
-    int res = send_get_history_request();
+    int res = send_get_history_request(msgsndflg);
     if (res != ECMSG_SUCCESS){
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_get_history_request() in get_history()");
@@ -647,7 +528,7 @@ int get_history(char** history){
     }
     // Получить ответ на запрос истории сообщений
     *history = NULL;
-    int history_size = get_history_response(history);
+    int history_size = get_history_response(history, msgrcvflg);
     if (
         history_size == ECMSG_NOMSG ||
         history_size == ECMSG_SIGNIT ||
@@ -675,11 +556,11 @@ int get_history(char** history){
 - ECMSG_SIGNIT
 - ECMSG_CRITICAL
 
-Требуется обработать возвращаемое значение, в случае неудачи
+Требуется обработать возвращаемое значение, в случае критической ошибки
 послать send_break_connect()*/
-int get_users_list(char*** list) {
+int get_users_list(char*** list, int msgsndflg, int msgrcvflg) {
     // Отправить запрос списка пользователей
-    int res = send_get_users_list_request();
+    int res = send_get_users_list_request(msgsndflg);
     if (res != ECMSG_SUCCESS){
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_get_history_request() in get_history()");
@@ -688,7 +569,7 @@ int get_users_list(char*** list) {
     }
     // Получить ответ на запрос
     **list = NULL;
-    int list_size = get_users_list_response(list);
+    int list_size = get_users_list_response(list, msgrcvflg);
     if (
         list_size == ECMSG_NOMSG ||
         list_size == ECMSG_SIGNIT ||
@@ -722,11 +603,12 @@ int get_users_list(char*** list) {
 - ECMSG_CRITICAL
 - ECMSG_QUEUE_EXISTS
 
-Требуется обработать возвращаемое значение, в случае неудачи
-послать send_break_connect()*/
+В случае критической ошибки автоматически посылается 
+send_break_connect() с флагом msgsndflg*/
 int establish_connection(char* name, int name_size, 
                         char** history, int* history_size, 
-                        char*** list, int* list_size) {
+                        char*** list, int* list_size,
+                        int msgsndflg, int msgrcvflg) {
     int res;
     // Подключиться к обеим очередям
     res = connect_all_queue();
@@ -737,7 +619,7 @@ int establish_connection(char* name, int name_size,
         return res;
     }
     // Отправить запрос на установление соединения
-    res = send_setup_connect_request(name, name_size);
+    res = send_setup_connect_request(name, name_size, msgsndflg);
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("send_setup_connect_request() in establish_connection()");
@@ -746,7 +628,7 @@ int establish_connection(char* name, int name_size,
     }
 
     // Получить ответ установления соединения
-    res = get_setup_connect_response(name);
+    res = get_setup_connect_response(name, msgrcvflg);
     if (res != ECMSG_SUCCESS) {
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("get_setup_connect_response() in establish_connection()");
@@ -755,8 +637,13 @@ int establish_connection(char* name, int name_size,
     }
 
     // Получить историю
-    *history_size = get_history(history);
+    *history_size = get_history(history, msgsndflg, msgrcvflg);
     if (*history_size < 0){
+        // Послать сообщение об отключении
+        if (send_break_connect(msgsndflg) != ECMSG_SUCCESS){
+            // Обязательно вывести
+            perror("send_break_connect() in get_history in establish_connection()");
+        }
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("get_history_response() in establish_connection()");
         #endif
@@ -764,10 +651,14 @@ int establish_connection(char* name, int name_size,
     }
 
     // Получить список пользователей
-
     *list = NULL;
-    *list_size = get_users_list_response(list);
+    *list_size = get_users_list(list, msgsndflg, msgrcvflg);
     if (*list_size < 0){
+        // Послать сообщение об отключении
+        if (send_break_connect(msgsndflg) != ECMSG_SUCCESS){
+            // Обязательно вывести
+            perror("send_break_connect() in get_history in establish_connection()");
+        }
         #ifdef ETRACE_CLIENT_MESSAGING
             perror("get_users_list_response() in establish_connection()");
         #endif

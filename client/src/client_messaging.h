@@ -47,4 +47,7 @@ extern long PFS; // priority from server - От сервера клиенту
 // Флаг установления соединения (0 если не установлено)
 extern int flg_connection_established;
 
+int check_msgrcv();
+int check_msgsnd();
+
 #endif//CLIENT_MESSAGING_H
