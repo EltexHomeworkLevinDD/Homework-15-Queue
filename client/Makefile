@@ -1,49 +1,39 @@
 CFLAGS := -Wall -Wextra -g
-SRC_DIR := src
-OBJ_DIR := obj
+MAKE_CD_OPTIONS := --no-print-directory
+
 BIN_DIR := ../bin
+OBJ_DIR := obj
+SRC_DIR := src
 
-# Файлы исходного кода
-MSGTYPES_H := ../msgtypes.h
-MSG1 := client_messaging
-MSG2 := client_control_messaging
-MSG3 := client_text_messaging
-CLIENT := client
-THREADS := client_threads
+TARGET := client
 
-.PHONY: all clean
+MESSAGING_DIR := messaging
+GRAPHICS_DIR := graphics
+THREADS_DIR := threads
 
-all: $(BIN_DIR)/$(CLIENT)
+.PHONY: all clean makeobj
 
-# Создание директорий
+all: $(BIN_DIR)/$(TARGET)
+
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+$(MESSAGING_DIR):
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(MESSAGING_DIR) all
 
-# Компиляция MSG
-$(OBJ_DIR)/$(MSG1).o: $(SRC_DIR)/$(MSG1).c $(SRC_DIR)/$(MSG1).h $(MSGTYPES_H) | $(OBJ_DIR)
-	gcc $(CFLAGS) -c $< -o $@
+$(GRAPHICS_DIR):
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(GRAPHICS_DIR) all
 
-$(OBJ_DIR)/$(MSG2).o: $(SRC_DIR)/$(MSG2).c $(SRC_DIR)/$(MSG2).h | $(OBJ_DIR)
-	gcc $(CFLAGS) -c $< -o $@
+$(THREADS_DIR):
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(THREADS_DIR) all
 
-$(OBJ_DIR)/$(MSG3).o: $(SRC_DIR)/$(MSG3).c $(SRC_DIR)/$(MSG3).h | $(OBJ_DIR)
-	gcc $(CFLAGS) -c $< -o $@
+makeobj: $(MESSAGING_DIR) $(GRAPHICS_DIR) $(THREADS_DIR)
 
-# Компиляция THREADS
-$(OBJ_DIR)/$(THREADS).o: $(SRC_DIR)/$(THREADS).c $(SRC_DIR)/$(THREADS).h | $(OBJ_DIR)
-	gcc $(CFLAGS) -c $< -o $@ -lpthread
-
-# Компиляция CLIENT
-$(OBJ_DIR)/$(CLIENT).o: $(SRC_DIR)/$(CLIENT).c | $(OBJ_DIR)
-	gcc $(CFLAGS) -c $< -o $@
-
-# Сборка
-$(BIN_DIR)/$(CLIENT): $(OBJ_DIR)/$(MSG1).o $(OBJ_DIR)/$(MSG2).o $(OBJ_DIR)/$(MSG3).o $(OBJ_DIR)/$(THREADS).o $(OBJ_DIR)/$(CLIENT).o | $(BIN_DIR)
-	gcc $(CFLAGS) $^ -o $@
+$(BIN_DIR)/$(TARGET): $(SRC_DIR)/$(TARGET).c | $(BIN_DIR) makeobj 
+	gcc $(CFLAGS) $< $(wildcard $(OBJ_DIR)/*.o) -o $@ -lncurses -lpthread
 
 clean:
-	rm -rf $(OBJ_DIR)
-	rm $(BIN_DIR)/$(CLIENT)
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(MESSAGING_DIR) clean
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(GRAPHICS_DIR) clean
+	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(THREADS_DIR) clean
+	rm -f $(BIN_DIR)/$(TARGET)

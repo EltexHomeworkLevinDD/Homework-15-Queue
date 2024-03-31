@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-#include "client_messaging.h"
 
 void* control_thread();
 void* text_thread();

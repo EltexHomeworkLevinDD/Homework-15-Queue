@@ -20,10 +20,10 @@
 #include <string.h>
 #include <sys/msg.h>
 #include <sys/types.h>
-#include "../../msgtypes.h"
+#include "../../../include/messaging_types.h"
 
-#define CONTROL_QUEUE_RELATIVE_PATH "../server/control_queue"
-#define TEXT_QUEUE_RELATIVE_PATH    "../server/text_queue"
+#define CONTROL_QUEUE_RELATIVE_PATH "../../../server/src/queue/control_queue"
+#define TEXT_QUEUE_RELATIVE_PATH    "../../../server/src/queue/text_queue"
 #define MAX_OWN_NAME_SIZE 32 
 // MAX_OWN_NAME_SIZE должен умещаться в MAX_CONTENT_SIZE из msgtypes.h
 // и оставлять достаточно места под char запись long числа

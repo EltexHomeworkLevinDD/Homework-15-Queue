@@ -68,12 +68,12 @@ struct ControlUsersList {
 
 // ================================= Text messages ==========================================================================
 
-#define MAX_TEXT_SIZE 256
+#define MAX_TEXT_MSG_SIZE 256 // Максимальный размер текста в передаваемом сообщении (не включая собственное имя)
 
 struct TextMessage {
     long mtype;
-    size_t text_size;
-    char text[MAX_TEXT_SIZE];
+    int text_size;
+    char text[MAX_TEXT_MSG_SIZE];
 };
 
 /*
