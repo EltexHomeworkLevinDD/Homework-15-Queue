@@ -11,7 +11,7 @@ MESSAGING_DIR := messaging
 GRAPHICS_DIR := graphics
 THREADS_DIR := threads
 
-.PHONY: all clean makeobj
+.PHONY: all clean makeobj $(BIN_DIR)/$(TARGET)
 
 all: $(BIN_DIR)/$(TARGET)
 

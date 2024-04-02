@@ -3,6 +3,9 @@
 
 // ================================= Control messages =================================
 
+#define CONTROL_QUEUE_RELATIVE_PATH "server/src/queue/control_queue"
+#define TEXT_QUEUE_RELATIVE_PATH    "server/src/queue/text_queue"
+
 #define MAX_CONTENT_SIZE 64    // Max size of field "content"
 #define MAX_HISTORY_SIZE 4096
 #define MAX_LIST_SIZE 1024
