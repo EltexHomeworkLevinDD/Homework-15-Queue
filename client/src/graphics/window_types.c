@@ -3,53 +3,6 @@
 char history[MAX_HISTORY_SIZE];
 int history_size = 0;
 
-WINDOW* terminalwnd;
-int terminalwnd_h = 0;
-int terminalwnd_w = 0;
-int terminalwnd_y = 0;
-int terminalwnd_x = 0;
-
-Window chatPlankwnd;
-Window chatwnd;
-
-Window listwnd;
-Window listPlankwnd;
-
-Window commandwnd;
-Window coommandPlankwnd;
-
-void set_window_parameters(Window* wnd, int h, int w, int y, int x){
-    wnd->main_x = x;
-    wnd->main_y = y;
-    wnd->main_h = h;
-    wnd->main_w = w;
-
-    wnd->sub_h = wnd->main_h - 2;
-    wnd->sub_w = wnd->main_w - 2;
-    wnd->sub_x = 1; // Изменено
-    wnd->sub_y = 1; // Изменено
-}
-
-void create_new_window_r(Window* wnd, int h, int w, int y, int x) {
-    wnd->mainwnd = newwin(h, w, y, x);
-    box(wnd->mainwnd, 0, 0);
-    wrefresh(wnd->mainwnd);
-
-    set_window_parameters(wnd, h, w, y, x);
-
-    wnd->subwnd = derwin(wnd->mainwnd, wnd->sub_h, wnd->sub_w, wnd->sub_y, wnd->sub_x);
-    wrefresh(wnd->subwnd);
-}
-
-void delete_window(Window* wnd){
-    wborder(wnd->subwnd, ' ', ' ', ' ',' ',' ',' ',' ',' ');
-    wborder(wnd->mainwnd, ' ', ' ', ' ',' ',' ',' ',' ',' ');
-    wrefresh(wnd->subwnd);
-    wrefresh(wnd->mainwnd);
-    delwin(wnd->subwnd);
-    delwin(wnd->mainwnd);
-}
-
 /*Сформировать полное сообщение ([Имя] Текст)
 Принимает
 - text - текст сообщения
@@ -121,27 +74,34 @@ int save_message_to_history(char* fullmessage, int size){
     return 0;
 }
 
-void create_main_window_r(WINDOW** wnd, int* h, int* w, int y, int x){
-    *wnd = newwin(*h, *w, y, x);
-    box(*wnd, 0,0);
-
-    // Если был передан 0,0, то получаю размеры окна
-    if (y == 0 && x == 0) {
-        getmaxyx(*wnd, *h, *w);
-    }
-
-    wrefresh(*wnd);
-}
-
-void resize_main_window_r(WINDOW* wnd, int h, int w){
-    wclear(wnd);
-    wresize(wnd, h, w);
-    box(wnd, 0,0);
-    wrefresh(wnd);
-}
-
 void set_text_centered(Window* plank, char* text){
     int len = strlen(text);
     int center = plank->sub_w/2 - len/2;
     mvwprintw(plank->subwnd, 0, center, "%s", text);
+}
+
+void create_std_window(Window* wnd){
+    wnd->mainwnd = newwin(wnd->main_h, wnd->main_w, wnd->main_y, wnd->main_x);
+    wnd->subwnd = derwin(wnd->mainwnd, wnd->sub_h, wnd->sub_w, 1, 1);
+    box(wnd->mainwnd, 0,0);
+}
+
+void create_std_plank(Window* wnd, char* text){
+    create_std_window(wnd);
+    set_text_centered(wnd, text);
+}
+
+void refresh_std_window_r(Window* wnd){
+    wrefresh(wnd->mainwnd);
+    wrefresh(wnd->subwnd);
+}
+
+void delete_std_window_r(Window* wnd){
+    wclear(wnd->mainwnd);
+    wclear(wnd->subwnd);
+
+    refresh_std_window_r(wnd);
+
+    delwin(wnd->subwnd);
+    delwin(wnd->mainwnd);
 }

@@ -22,11 +22,6 @@
 #include <sys/types.h>
 #include "../../../include/messaging_types.h"
 
-#define MAX_OWN_NAME_SIZE 11
-// MAX_OWN_NAME_SIZE должен умещаться в MAX_CONTENT_SIZE из msgtypes.h
-// и оставлять достаточно места под char запись long числа
-// для MAX_OWN_NAME_SIZE=11 и MAX_OWN_NAME_SIZE=64 в MAX_OWN_NAME_SIZE остается 53 под запись long числа
-
 #define ECMSG_SUCCESS            0      // Успех
 #define ECMSG_NOMSG             -1      // Нет сообщений
 #define ECMSG_SIGNIT            -2      // Выполнение прервано сигналом

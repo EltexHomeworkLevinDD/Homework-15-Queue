@@ -9,6 +9,9 @@
 #define MAX_CONTENT_SIZE 64    // Max size of field "content"
 #define MAX_HISTORY_SIZE 4096
 #define MAX_LIST_SIZE 1024
+#define MAX_OWN_NAME_SIZE (16)
+// MAX_OWN_NAME_SIZE должен умещаться в MAX_CONTENT_SIZE из msgtypes.h
+// и оставлять достаточно места под char запись long числа
 
 struct ControlMessage {
     long mtype;

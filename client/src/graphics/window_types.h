@@ -7,12 +7,9 @@
 #include <malloc.h>
 #include "../../../include/messaging_types.h"
 
-#define EG_CRIRICAL -3
+#define ETRACE_CLIENT_GRAPHICS
 
-#define PLANK_HEIGHT 3
-// Должен быть больше или равен MAX_OWN_NAME_SIZE+2
-#define USERS_LIST_WIDTH (MAX_OWN_NAME_SIZE+2+5)
-#define COMMAND_WINDOW_HEIGHT 5
+#define EG_CRIRICAL -3
 
 typedef struct {
     WINDOW* mainwnd;
@@ -21,8 +18,6 @@ typedef struct {
     int main_y;
     int main_h;
     int main_w;
-    int sub_x;
-    int sub_y;
     int sub_h;
     int sub_w;
 } Window;
@@ -39,30 +34,15 @@ extern int fullmessage_size;
 extern char history[];
 extern int history_size;
 
-extern WINDOW* terminalwnd;
-extern int terminalwnd_h;
-extern int terminalwnd_w;
-extern int terminalwnd_y;
-extern int terminalwnd_x;
-
-extern Window chatPlankwnd;
-extern Window chatwnd;
-extern Window listwnd;
-extern Window listPlankwnd;
-extern Window commandwnd;
-extern Window coommandPlankwnd;
-
-void create_new_window_r(Window* wnd, int h, int w, int y, int x);
-void delete_window(Window* wnd);
-
-void create_main_window_r(WINDOW** wnd, int* h, int* w, int y, int x);
-void resize_main_window_r(WINDOW* wnd, int h, int w);
 
 int create_message(char* text, int size, char** fullmessage);
 int save_message_to_history(char* fullmessage, int size);
 
 void set_text_centered(Window* plank, char* text);
-void set_window_parameters(Window* wnd, int h, int w, int y, int x);
 
+void create_std_window(Window* wnd);
+void create_std_plank(Window* wnd, char* text);
+void delete_std_window_r(Window* wnd);
+void refresh_std_window_r(Window* wnd);
 
 #endif//WINDOW_TYPES_H
