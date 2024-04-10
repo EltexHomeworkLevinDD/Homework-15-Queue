@@ -1,14 +1,3 @@
-*
-!client
-!client/src
-!client/src/**
-
-!server
-!server/src
-!server/src/**
-
-!include
-!include/*
-
-!.gitignore
-!Makefile
+bin/
+obj/
+.vscode/

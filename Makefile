@@ -1,26 +1,41 @@
+CC := gcc
 CFLAGS := -Wall -Wextra -g
-MAKE_CD_OPTIONS := --no-print-directory
 
-clean:
-	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(MESSAGING_DIR) clean
-	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(GRAPHICS_DIR) clean
-	$(MAKE) $(MAKE_CD_OPTIONS) -C $(SRC_DIR)/$(THREADS_DIR) clean
-	rm -f $(BIN_DIR)/$(TARGET)
+MAIN_DIR := $(CURDIR)
+INC_DIR := $(CURDIR)/include
+SRC_DIR := $(CURDIR)/src
+OBJ_DIR := $(CURDIR)/obj
+BIN_DIR := $(CURDIR)/bin
 
-.PHONY: all client server clean_client clean_server
+.PHONY: all common server client
 
-all: client server
+$(OBJ_DIR):
 
-client:
-	$(MAKE) $(MAKE_CD_OPTIONS) -C client all
+subdirs:
+	mkdir -p $(OBJ_DIR)/server
+	mkdir -p $(OBJ_DIR)/client
+	mkdir -p $(OBJ_DIR)/common
+	mkdir -p $(BIN_DIR)
+
+all: common server client
+
+common: subdirs
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/common CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) all
+
+clean_common:
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/common CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) clean
 
 server:
-	$(MAKE) $(MAKE_CD_OPTIONS) -C server all
-
-clean_client:
-	$(MAKE) $(MAKE_CD_OPTIONS) -C client clean
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/server CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) all
 
 clean_server:
-	$(MAKE) $(MAKE_CD_OPTIONS) -C server clean
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/server CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) clean
 
-clean: clean_server clean_client
+client:
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/client CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) all
+
+client_server:
+	$(MAKE) --no-print-directory -C $(SRC_DIR)/client CC=$(CC) CFLAGS="$(CFLAGS)" MAIN_DIR=$(MAIN_DIR) clean
+
+
+clean: clean_common clean_server client_server
